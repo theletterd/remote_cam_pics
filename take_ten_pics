@@ -1,0 +1,23 @@
+#!/bin/bash
+
+format="NEF"
+
+if [ $# -eq 0 ]; then
+  frames=10
+else
+  frames=$1
+fi
+
+gphoto2 --auto-detect --interval=1 --frames=$frames --capture-image-and-download --filename "20%y-%m-%d_%H:%M:%S.$format"
+
+# maybe we can make this faster somehow.
+yes | ufraw-batch --shrink=10 --out-type=jpg *.NEF
+
+# find the
+find . -name "*.$format" -print | sort -r | head -n 10 | xargs ufraw-batch --shrink=10 --out-type=jpg --overwrite
+
+
+# generate the index page
+./make_index > index.html
+
+

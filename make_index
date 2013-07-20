@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "<html>"
+echo "  <head>"
+echo "  </head>"
+echo "  <body>"
+
+for filename in `find -name "*jpg" | sort`; do
+    echo "<img src='$filename'/>";
+done
+
+echo "  </body>"
+echo "<html>"
