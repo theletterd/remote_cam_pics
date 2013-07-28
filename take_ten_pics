@@ -1,6 +1,8 @@
 #!/bin/bash
 
-format="NEF"
+format="JPG"
+outpath="./thumbs"
+shrink=10
 
 if [ $# -eq 0 ]; then
   frames=10
@@ -8,16 +10,27 @@ else
   frames=$1
 fi
 
+echo "Taking photos..."
 gphoto2 --auto-detect --interval=1 --frames=$frames --capture-image-and-download --filename "20%y-%m-%d_%H:%M:%S.$format"
 
-# maybe we can make this faster somehow.
-yes | ufraw-batch --shrink=10 --out-type=jpg *.NEF
+echo "Making thumbnails..."
+# we only need to call into ufraw to convert from raw
+if [ "$format" == "NEF" ]; then
+    find . -name "*.$format" -print | sort -r | head -n $frames | xargs ufraw-batch --shrink=$shrink --out-type=jpg --out-path=$outpath --overwrite
+elif [ "$format" == "JPG" ]; then
+    # let's just use PIL
+    find . -name "*.$format" -print | sort -r | sed 's/.\///' | head -n $frames | xargs -I {} ./resize.py -o $outpath -s $shrink {}
 
-# find the
-find . -name "*.$format" -print | sort -r | head -n 10 | xargs ufraw-batch --shrink=10 --out-type=jpg --overwrite
+    # let's make sure we kill all those uppercase JPGs
+    pushd $outpath
+    for FILE in *.JPG; do mv $FILE ${FILE%.JPG}.jpg; done
+    popd
+fi
 
-
+echo "Generating index page..."
 # generate the index page
-./make_index > index.html
+pushd $outpath
+../make_index > index.html
+popd
 
 

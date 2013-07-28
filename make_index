@@ -5,7 +5,7 @@ echo "  <head>"
 echo "  </head>"
 echo "  <body>"
 
-for filename in `find -name "*jpg" | sort`; do
+for filename in `find -name "*jpg" | sort -r`; do
     echo "<img src='$filename'/>";
 done
 
