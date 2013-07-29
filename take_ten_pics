@@ -1,44 +1,66 @@
 #!/bin/bash
 
-camera_make='Nikon Corp.' # as seen in lsusb
+function reset_usb() {
+    # reset the usb device
+    echo "Resetting usb..."
+    local camera_make=$1
+    lsusb | grep "$camera_make" | awk '{print "/dev/bus/usb/",$2,"/",$4}' | sed 's/[: ]//g' | xargs -I {} ./usbreset {}
+}
+
+function take_photos() {
+    echo "Taking photos..."
+    local frames=$1
+    gphoto2 --auto-detect --interval=1 --frames=$frames --capture-image-and-download --filename "20%y-%m-%d_%H:%M:%S.%C"
+}
+
+function detect_format() {
+    # detect format
+    echo "Detecting format..."
+    format=`ls -ltp | grep -v / | grep -v total | head -n1 | grep -Eo "(JPG|NEF)"`
+    echo "Format: $format"
+}
+
+function make_thumbnails() {
+    # make thumbnails
+    local format=$1
+    local frames=$2
+    local shrink_factor=$3
+    local outpath=$4
+    echo "Making thumbnails..."
+    if [ "$format" == "NEF" ]; then
+	find . -name "*.$format" -print | sort -r | head -n $frames | xargs ufraw-batch --shrink=$shrink --out-type=jpg --out-path=$outpath --overwrite
+    elif [ "$format" == "JPG" ]; then
+        # let's just use PIL
+	find . -name "*.$format" -print | sort -r | sed 's/.\///' | head -n $frames | xargs -I {} ./resize.py -o $outpath -s $shrink {}
+
+        # let's make sure we kill all those uppercase JPGs
+	pushd $outpath
+	for FILE in *.JPG; do mv $FILE ${FILE%.JPG}.jpg; done
+	popd
+    fi
+}
+
+function generate_index_page() {
+    echo "Generating index page..."
+    # generate the index page
+    local outpath=$1
+    pushd $outpath
+    ../make_index > index.html
+    popd
+}
+
+# ok let's get this show on the road
+if [ $# -eq 0 ]; then
+    num_frames=10
+else
+    num_frames=$1
+fi
+
 outpath="./thumbs"
 shrink=10
 
-if [ $# -eq 0 ]; then
-  frames=10
-else
-  frames=$1
-fi
-
-# reset the usb device
-lsusb | grep "$camera_make" | awk '{print "/dev/bus/usb/",$2,"/",$4}' | sed 's/[: ]//g' | xargs -I {} ./usbreset {}
-
-echo "Taking photos..."
-gphoto2 --auto-detect --interval=1 --frames=$frames --capture-image-and-download --filename "20%y-%m-%d_%H:%M:%S.%C"
-
-# detect format
-format=`ls -ltp | grep -v / | grep -v total | head -n1 | grep -Eo "(JPG|NEF)"`
-echo "Detected format: $format"
-
-# make thumbnails
-echo "Making thumbnails..."
-if [ "$format" == "NEF" ]; then
-    find . -name "*.$format" -print | sort -r | head -n $frames | xargs ufraw-batch --shrink=$shrink --out-type=jpg --out-path=$outpath --overwrite
-elif [ "$format" == "JPG" ]; then
-    # let's just use PIL
-    find . -name "*.$format" -print | sort -r | sed 's/.\///' | head -n $frames | xargs -I {} ./resize.py -o $outpath -s $shrink {}
-
-    # let's make sure we kill all those uppercase JPGs
-    pushd $outpath
-    for FILE in *.JPG; do mv $FILE ${FILE%.JPG}.jpg; done
-    popd
-fi
-
-echo "Generating index page..."
-# generate the index page
-pushd $outpath
-../make_index > index.html
-popd
-
-
-
+reset_usb 'Nikon Corp'
+take_photos $num_frames
+detect_format # sets global_var $format
+make_thumbnails $format $num_frames $shrink $outpath
+generate_index_page $outpath
