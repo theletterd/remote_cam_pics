@@ -1,6 +1,6 @@
 #!/bin/bash
 
-format="JPG"
+camera_make='Nikon Corp.' # as seen in lsusb
 outpath="./thumbs"
 shrink=10
 
@@ -10,11 +10,18 @@ else
   frames=$1
 fi
 
-echo "Taking photos..."
-gphoto2 --auto-detect --interval=1 --frames=$frames --capture-image-and-download --filename "20%y-%m-%d_%H:%M:%S.$format"
+# reset the usb device
+lsusb | grep "$camera_make" | awk '{print "/dev/bus/usb/",$2,"/",$4}' | sed 's/[: ]//g' | xargs -I {} ./usbreset {}
 
+echo "Taking photos..."
+gphoto2 --auto-detect --interval=1 --frames=$frames --capture-image-and-download --filename "20%y-%m-%d_%H:%M:%S.%C"
+
+# detect format
+format=`ls -ltp | grep -v / | grep -v total | head -n1 | grep -Eo "(JPG|NEF)"`
+echo "Detected format: $format"
+
+# make thumbnails
 echo "Making thumbnails..."
-# we only need to call into ufraw to convert from raw
 if [ "$format" == "NEF" ]; then
     find . -name "*.$format" -print | sort -r | head -n $frames | xargs ufraw-batch --shrink=$shrink --out-type=jpg --out-path=$outpath --overwrite
 elif [ "$format" == "JPG" ]; then
@@ -32,5 +39,6 @@ echo "Generating index page..."
 pushd $outpath
 ../make_index > index.html
 popd
+
 
 
