@@ -10,13 +10,21 @@ function reset_usb() {
 function take_photos() {
     echo "Taking photos..."
     local frames=$1
+    local photopath=$2
+
+    # we should ensure that a $photopath directory exists
+    mkdir -p $photopath
+
+    pushd $photopath
     gphoto2 --auto-detect --interval=1 --frames=$frames --capture-image-and-download --filename "20%y-%m-%d_%H:%M:%S.%C"
+    popd
 }
 
 function detect_format() {
     # detect format
+    local photopath=$1
     echo "Detecting format..."
-    format=`ls -ltp | grep -v / | grep -v total | head -n1 | grep -Eo "(JPG|NEF)"`
+    format=`ls $photopath -ltp | grep -v / | grep -v total | head -n1 | grep -Eo "(JPG|NEF)"`
     echo "Format: $format"
 }
 
@@ -25,13 +33,17 @@ function make_thumbnails() {
     local format=$1
     local frames=$2
     local shrink_factor=$3
-    local outpath=$4
+    local photopath=$4
+    local outpath=$5
+
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
     echo "Making thumbnails..."
     if [ "$format" == "NEF" ]; then
-	find . -name "*.$format" -print | sort -r | head -n $frames | xargs ufraw-batch --shrink=$shrink --out-type=jpg --out-path=$outpath --overwrite
+	find $photopath -name "*.$format" -print | sort -r | head -n $frames | xargs ufraw-batch --shrink=$shrink --out-type=jpg --out-path=$outpath --overwrite
     elif [ "$format" == "JPG" ]; then
         # let's just use PIL
-	find . -name "*.$format" -print | sort -r | sed 's/.\///' | head -n $frames | xargs -I {} ./resize.py -o $outpath -s $shrink {}
+	find $photopath -name "*.$format" -print | sort -r | head -n $frames | xargs -I {} $DIR/resize.py -o $outpath -s $shrink {}
 
         # let's make sure we kill all those uppercase JPGs
 	pushd $outpath
@@ -40,27 +52,14 @@ function make_thumbnails() {
     fi
 }
 
-function generate_index_page() {
-    echo "Generating index page..."
-    # generate the index page
-    local outpath=$1
-    pushd $outpath
-    ../make_index > index.html
-    popd
-}
-
 # ok let's get this show on the road
-if [ $# -eq 0 ]; then
-    num_frames=10
-else
-    num_frames=$1
-fi
-
-outpath="./thumbs"
+photopath=$1
+outpath=$2
+num_frames=$3
 shrink=10
 
 reset_usb 'Nikon Corp'
-take_photos $num_frames
-detect_format # sets global_var $format
-make_thumbnails $format $num_frames $shrink $outpath
-generate_index_page $outpath
+take_photos $num_frames $photopath
+detect_format $photopath # sets global_var $format
+make_thumbnails $format $num_frames $shrink $photopath $outpath
+

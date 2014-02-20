@@ -1,0 +1,12 @@
+<!doctype html>
+<div name="action-buttons">
+  <form method='POST', action="/take_pics">
+    {% for framenum_value in framenum_values %}
+    <button name="framenum" value="{{ framenum_value }}">{{ framenum_value }}</button>
+    {% endfor %}
+  </form>
+</div>
+
+{% for thumbnail in thumbnails %}
+  <img src="{{ url_for('static', filename=thumbnail) }}"/>
+{% endfor %}
