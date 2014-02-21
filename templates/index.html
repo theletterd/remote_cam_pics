@@ -7,6 +7,9 @@
   </form>
 </div>
 
-{% for thumbnail in thumbnails %}
-  <img src="{{ url_for('static', filename=thumbnail) }}"/>
+{% for thumbnail, original in thumbnail_original_pairs %}
+
+  <a href="{{ url_for('static', filename=original) }}">
+    <img src="{{ url_for('static', filename=thumbnail) }}"/>
+  </a>
 {% endfor %}

@@ -4,33 +4,33 @@ from flask import render_template
 from flask import request
 from flask import url_for
 
-from util.util import get_recently_created_filenames
-from util.util import reset_usb
+from util.util import get_thumbnail_original_pairs
+from util.util import take_photos_and_make_thumbnails
+
+import settings
 
 import os
 
 app = Flask(__name__)
 
-FRAMENUM_VALUES = [1, 5, 10, 20]
 
 @app.route('/', methods=['GET'])
 def index():
-    thumbnail_filenames = get_recently_created_filenames('static/thumbs', limit=30)
-    thumbnails = [filename.replace('static/', '', 1) for filename in thumbnail_filenames]
+    thumbnail_original_pairs = get_thumbnail_original_pairs(limit=30)
     return render_template(
         'index.html',
-        thumbnails=thumbnails,
-        framenum_values=FRAMENUM_VALUES
+        thumbnail_original_pairs=thumbnail_original_pairs,
+        framenum_values=settings.framenum_values
     )
 
 @app.route('/take_pics', methods=['POST'])
 def take_pics():
-    pics_to_take = int(request.form['framenum'])
+    num_pics = int(request.form['framenum'])
 
-    assert pics_to_take in FRAMENUM_VALUES
+    assert num_pics in settings.framenum_values
     
-    reset_usb('nikon')
-    os.system('util/take_ten_pics ./static/originals/ ./static/thumbs/ %d' % pics_to_take)
+    take_photos_and_make_thumbnails(num_pics)
+
     # ok this is where we do the business as it were.
     return redirect(url_for('index'))
 

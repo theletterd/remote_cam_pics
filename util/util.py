@@ -1,9 +1,39 @@
 from stat import S_ISREG, ST_CTIME, ST_MODE
 import os
 import usb
+import subprocess
+import settings
+from PIL import Image
+
+def take_photos_and_make_thumbnails(num_pics):
+    try:
+        # reset usb and take photos
+        _reset_usb(settings.manufacturer)
+        _take_photos(num_pics)
+    except:
+        pass
+
+    # make thumbnails
+    filenames = _get_recently_created_filenames(settings.originals_dir, limit=num_pics)
+    _make_thumbnails(filenames)
+
+def get_thumbnail_original_pairs(limit=30):
+    thumbnail_filenames = _get_recently_created_filenames(settings.thumbnails_dir, limit=limit)
+
+    # trim off the 'static' dir
+    thumbnail_filenames = [
+        filename.replace(settings.static_dir, '.', 1)
+        for filename in thumbnail_filenames
+    ]
+
+    thumbnail_original_pairs = [
+        (thumbnail, thumbnail.replace(settings.thumbnails_dir_name, settings.originals_dir_name, 1))
+        for thumbnail in thumbnail_filenames
+    ]
+    return thumbnail_original_pairs
 
 
-def get_recently_created_filenames(dirpath, limit=None, extension='jpg'):
+def _get_recently_created_filenames(dirpath, limit=None, extension='JPG'):
     # get all entries in the directory w/ stats
     entries = (
         os.path.join(dirpath, fn) for fn in os.listdir(dirpath)
@@ -25,9 +55,9 @@ def get_recently_created_filenames(dirpath, limit=None, extension='jpg'):
     ]
 
     return pathnames
-    
 
-def reset_usb(camera_manufacturer):
+
+def _reset_usb(camera_manufacturer):
     all_usb_devices = usb.core.find(find_all=True)
 
     for device in all_usb_devices:
@@ -38,3 +68,38 @@ def reset_usb(camera_manufacturer):
                 return
         except:
             pass
+
+def _take_photos(num_photos):
+
+    args = [
+        'gphoto2',
+        '--auto-detect',
+        '--interval=1',
+        '--frames={num_frames}'.format(num_frames=num_photos),
+        '--capture-image-and-download',
+        '--filename={originals_dir}/20%y-%m-%d_%H:%M:%S.%C'.format(
+            originals_dir=settings.originals_dir
+        )
+    ]
+
+    exit_code = subprocess.check_call(args)
+    if exit_code != 0:
+        raise Exception
+
+def _make_thumbnail(path_to_file, shrink_factor=10):
+    img = Image.open(path_to_file)
+    new_size = [dimension / shrink_factor for dimension in img.size]
+    img.thumbnail(new_size)
+    filename = path_to_file.split('/')[-1]
+    path = "{output_dir}/{filename}".format(
+        output_dir=settings.thumbnails_dir,
+        filename=filename
+    )
+    img.save(path)
+    print "Thumbnail saved as %s" % path
+
+
+def _make_thumbnails(filenames):
+    for path in filenames:
+        _make_thumbnail(path)
+
