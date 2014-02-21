@@ -1,12 +1,5 @@
 #!/bin/bash
 
-function reset_usb() {
-    # reset the usb device
-    echo "Resetting usb..."
-    local camera_make=$1
-    lsusb | grep "$camera_make" | awk '{print "/dev/bus/usb/",$2,"/",$4}' | sed 's/[: ]//g' | xargs -I {} ./usbreset {}
-}
-
 function take_photos() {
     echo "Taking photos..."
     local frames=$1
@@ -36,8 +29,6 @@ function make_thumbnails() {
     local photopath=$4
     local outpath=$5
 
-    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
     echo "Making thumbnails..."
     if [ "$format" == "NEF" ]; then
 	find $photopath -name "*.$format" -print | sort -r | head -n $frames | xargs ufraw-batch --shrink=$shrink --out-type=jpg --out-path=$outpath --overwrite
@@ -52,13 +43,14 @@ function make_thumbnails() {
     fi
 }
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # ok let's get this show on the road
 photopath=$1
 outpath=$2
 num_frames=$3
 shrink=10
 
-reset_usb 'Nikon Corp'
 take_photos $num_frames $photopath
 detect_format $photopath # sets global_var $format
 make_thumbnails $format $num_frames $shrink $photopath $outpath
