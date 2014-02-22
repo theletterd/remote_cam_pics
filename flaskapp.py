@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -34,8 +35,7 @@ def take_pics():
 
     take_photos_and_make_thumbnails(num_pics)
 
-    # ok this is where we do the business as it were.
-    return redirect(url_for('index'))
+    return jsonify(success=True)
 
 
 if __name__ == '__main__':
