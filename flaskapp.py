@@ -6,6 +6,7 @@ from flask import url_for
 
 from util.util import get_thumbnail_original_pairs
 from util.util import take_photos_and_make_thumbnails
+from util.sass import regenerate_scss
 
 import settings
 
@@ -13,9 +14,11 @@ import os
 
 app = Flask(__name__)
 
-
 @app.route('/', methods=['GET'])
 def index():
+    if app.debug:
+        regenerate_scss()
+
     thumbnail_original_pairs = get_thumbnail_original_pairs(limit=30)
     return render_template(
         'index.html',

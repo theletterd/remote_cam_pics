@@ -2,26 +2,35 @@
 <html>
   <head>
     <title>well, shit</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css"/>
   </head>
 
   <body>
     <div id="action-area-container">
-      <div class="action-area">
-	<form method="POST", action="/take_pics", id="snapshot-form">
-	    {% for framenum_value in framenum_values %}
-	    <button name="framenum" value="{{ framenum_value }}">{{ framenum_value }}</button>
-	    {% endfor %}
-	</form>
-      </div>
 
+      {% for framenum_value in framenum_values %}
+      <div class="button-container">
+	<div class="action-button" name="framenum" value="{{ framenum_value }}">
+	  <span>{{ framenum_value }}</span>
+	</div>
+      </div>
+	{% endfor %}
     </div>
 
-    {% for thumbnail, original in thumbnail_original_pairs %}
-    <a href="{{ url_for('static', filename=original) }}">
-      <img src="{{ url_for('static', filename=thumbnail) }}"/>
-    </a>
-    {% endfor %}
+    <div id="photos">
 
+      {% for thumbnail, original in thumbnail_original_pairs %}
+      <div class="photo-container">
+	<a href="{{ url_for('static', filename=original) }}"><img src="{{ url_for('static', filename=thumbnail) }}"/></a>
+      </div>
+      {% endfor %}
+    </div>
+
+<!--
+      <div class="action-area">
+	<form method="POST", action="/take_pics", id="snapshot-form">
+	</form>
+      </div>
+ -->
   </body>
 </html>
