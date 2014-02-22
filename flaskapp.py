@@ -28,7 +28,7 @@ def take_pics():
     num_pics = int(request.form['framenum'])
 
     assert num_pics in settings.framenum_values
-    
+
     take_photos_and_make_thumbnails(num_pics)
 
     # ok this is where we do the business as it were.

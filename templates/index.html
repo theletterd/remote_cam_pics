@@ -1,15 +1,27 @@
 <!doctype html>
-<div name="action-buttons">
-  <form method='POST', action="/take_pics">
-    {% for framenum_value in framenum_values %}
-    <button name="framenum" value="{{ framenum_value }}">{{ framenum_value }}</button>
+<html>
+  <head>
+    <title>well, shit</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css"/>
+  </head>
+
+  <body>
+    <div id="action-area-container">
+      <div class="action-area">
+	<form method="POST", action="/take_pics", id="snapshot-form">
+	    {% for framenum_value in framenum_values %}
+	    <button name="framenum" value="{{ framenum_value }}">{{ framenum_value }}</button>
+	    {% endfor %}
+	</form>
+      </div>
+
+    </div>
+
+    {% for thumbnail, original in thumbnail_original_pairs %}
+    <a href="{{ url_for('static', filename=original) }}">
+      <img src="{{ url_for('static', filename=thumbnail) }}"/>
+    </a>
     {% endfor %}
-  </form>
-</div>
 
-{% for thumbnail, original in thumbnail_original_pairs %}
-
-  <a href="{{ url_for('static', filename=original) }}">
-    <img src="{{ url_for('static', filename=thumbnail) }}"/>
-  </a>
-{% endfor %}
+  </body>
+</html>

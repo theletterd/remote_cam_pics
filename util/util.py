@@ -39,6 +39,7 @@ def _get_recently_created_filenames(dirpath, limit=None, extension='JPG'):
         os.path.join(dirpath, fn) for fn in os.listdir(dirpath)
         if fn.endswith(extension)
     )
+
     entries = ((os.stat(path), path) for path in entries)
     # leave only regular files, insert creation date
     entries = (

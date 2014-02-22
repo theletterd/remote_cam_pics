@@ -1,4 +1,5 @@
-static_dir = 'static'
+ROOT_DIR = '/home/duncan/programming/remote_cam_pics/'
+static_dir = ROOT_DIR + 'static'
 originals_dir_name = 'originals'
 thumbnails_dir_name = 'thumbnails'
 
