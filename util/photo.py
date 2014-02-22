@@ -1,19 +1,28 @@
 from stat import S_ISREG, ST_CTIME, ST_MODE
 import os
-import usb
 import subprocess
 import settings
 from PIL import Image
 
-def take_photos_and_make_thumbnails(num_pics):
-    try:
-        # reset usb and take photos
-        _reset_usb(settings.manufacturer)
-        _take_photos(num_pics)
-    except:
-        pass
 
-    # make thumbnails
+def take_photos(num_photos):
+
+    args = [
+        'gphoto2',
+        '--auto-detect',
+        '--interval=1',
+        '--frames={num_frames}'.format(num_frames=num_photos),
+        '--capture-image-and-download',
+        '--filename={originals_dir}/20%y-%m-%d_%H:%M:%S.%C'.format(
+            originals_dir=settings.originals_dir
+        )
+    ]
+
+    exit_code = subprocess.check_call(args)
+    if exit_code != 0:
+        raise Exception
+
+def make_thumbnails(num_pics):
     filenames = _get_recently_created_filenames(settings.originals_dir, limit=num_pics)
     _make_thumbnails(filenames)
 
@@ -56,36 +65,6 @@ def _get_recently_created_filenames(dirpath, limit=None, extension='JPG'):
     ]
 
     return pathnames
-
-
-def _reset_usb(camera_manufacturer):
-    all_usb_devices = usb.core.find(find_all=True)
-
-    for device in all_usb_devices:
-        try:
-            device_product = usb.util.get_string(device, 256, device.iProduct)
-            if camera_manufacturer.lower() in device_product.lower():
-                device.reset()
-                return
-        except:
-            pass
-
-def _take_photos(num_photos):
-
-    args = [
-        'gphoto2',
-        '--auto-detect',
-        '--interval=1',
-        '--frames={num_frames}'.format(num_frames=num_photos),
-        '--capture-image-and-download',
-        '--filename={originals_dir}/20%y-%m-%d_%H:%M:%S.%C'.format(
-            originals_dir=settings.originals_dir
-        )
-    ]
-
-    exit_code = subprocess.check_call(args)
-    if exit_code != 0:
-        raise Exception
 
 def _make_thumbnail(path_to_file, shrink_factor=10):
     img = Image.open(path_to_file)

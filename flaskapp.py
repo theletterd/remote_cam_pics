@@ -5,12 +5,11 @@ from flask import render_template
 from flask import request
 from flask import url_for
 
-from util.util import get_thumbnail_original_pairs
-from util.util import take_photos_and_make_thumbnails
-from util.sass import regenerate_scss
+import util.sass
+import util.usb_resetter
+import util.photo
 
 import settings
-
 import os
 
 app = Flask(__name__)
@@ -18,9 +17,9 @@ app = Flask(__name__)
 @app.route('/', methods=['GET'])
 def index():
     if app.debug:
-        regenerate_scss()
+        util.sass.regenerate_scss()
 
-    thumbnail_original_pairs = get_thumbnail_original_pairs(limit=30)
+    thumbnail_original_pairs = util.photo.get_thumbnail_original_pairs(limit=30)
     return render_template(
         'index.html',
         thumbnail_original_pairs=thumbnail_original_pairs,
@@ -33,7 +32,9 @@ def take_pics():
 
     assert num_pics in settings.framenum_values
 
-    take_photos_and_make_thumbnails(num_pics)
+    util.usb_resetter.reset_usb(settings.manufacturer)
+    util.photo.take_photos(num_pics)
+    util.photo.make_thumbnails(num_pics)
 
     return jsonify(success=True)
 
