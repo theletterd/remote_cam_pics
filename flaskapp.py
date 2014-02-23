@@ -27,7 +27,7 @@ def index():
     return render_template(
         'index.html',
         thumbnail_original_pairs=thumbnail_original_pairs,
-        framenum_values=settings.framenum_values
+        framenum_values=settings.framenum_values,
     )
 
 @app.route('/take_pics', methods=['POST'])
@@ -83,7 +83,8 @@ def ws_take_pics(ws):
     ctx.push()
     new_thumbnail_html = render_template(
         'photo_container.html',
-        thumbnail_original_pairs=thumbnail_original_pairs
+        thumbnail_original_pairs=thumbnail_original_pairs,
+        invisible=True
     )
     ctx.pop()
 

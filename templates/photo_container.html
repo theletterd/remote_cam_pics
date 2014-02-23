@@ -1,9 +1,9 @@
-{% macro photo_container(thumbnail, original) %}
-    <div class="photo-container">
+{% macro photo_container(thumbnail, original, invisible=False) %}
+    <div class="photo-container" {% if invisible %}style="display:none"{% endif %}>
     	<a href="{{ url_for('static', filename=original) }}"><img src="{{ url_for('static', filename=thumbnail) }}"/></a>
     </div>
 {% endmacro %}
 
 {% for thumbnail, original in thumbnail_original_pairs %}
-  {{ photo_container(thumbnail=thumbnail, original=original) }}
+  {{ photo_container(thumbnail=thumbnail, original=original, invisible=invisible) }}
 {% endfor %}

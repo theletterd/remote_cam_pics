@@ -1,17 +1,5 @@
 $(document).ready(function() {
 
-/*    $('.action-button').click(function(event) {
-	var num_frames = $(this).attr('value');
-
-	$.ajax({
-	    type: 'POST',
-	    url: '/take_pics',
-	    data: {framenum: num_frames},
-	    success: location.reload(),
-	    async: false
-	});
-    });
-*/
     $('.action-button').click(function(event) {
 	// maybe it makes sense to disable all the buttons here.
 	$('.action-button').addClass('disabled');
@@ -31,6 +19,7 @@ $(document).ready(function() {
 	    }
 	    if ('new_thumbnail_html' in message) {
 		$('#photos').prepend(message.new_thumbnail_html);
+		$('.photo-container').fadeIn(1000);
 	    }
 	};
 
