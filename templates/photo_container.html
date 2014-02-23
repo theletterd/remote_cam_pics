@@ -1,0 +1,6 @@
+{% macro photo_container(thumbnail, original) %}
+    <div class="photo-container">
+    	<a href="{{ url_for('static', filename=original) }}"><img src="{{ url_for('static', filename=thumbnail) }}"/></a>
+    </div>
+{% endmacro %}
+{{ photo_container(thumbnail=thumbnail, original=original) }}

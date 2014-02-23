@@ -60,7 +60,6 @@ def ws_take_pics(ws):
         util.photo.make_thumbnails(num_pics)
     except:
         ws.send(json.dumps({"message":":("}))
-
     ws.close()
 
 if __name__ == '__main__':

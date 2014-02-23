@@ -27,11 +27,9 @@
     </div>
 
     <div id="photos">
-
+      {% import "photo_container.html" as photo_container %}
       {% for thumbnail, original in thumbnail_original_pairs %}
-      <div class="photo-container">
-	<a href="{{ url_for('static', filename=original) }}"><img src="{{ url_for('static', filename=thumbnail) }}"/></a>
-      </div>
+        {{ photo_container.photo_container(thumbnail=thumbnail, original=original) }}
       {% endfor %}
     </div>
 
