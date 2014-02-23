@@ -8,7 +8,14 @@
   </head>
 
   <body>
-    <div id="action-area-container">
+
+    <div id="message-container">
+      <div id="message-area">
+	TAKE A PICTURE
+      </div>
+    </div>
+
+    <div id="action-area">
 
       {% for framenum_value in framenum_values %}
       <div class="button-container">
@@ -28,11 +35,5 @@
       {% endfor %}
     </div>
 
-<!--
-      <div class="action-area">
-	<form method="POST", action="/take_pics", id="snapshot-form">
-	</form>
-      </div>
- -->
   </body>
 </html>
