@@ -1,5 +1,5 @@
 *~
 *.pyc
 env/
-static/thumbnails/*
-static/originals/*
+static/thumbnails
+static/originals

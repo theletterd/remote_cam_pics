@@ -1,4 +1,5 @@
-ROOT_DIR = '/home/duncan/programming/remote_cam_pics/'
+import os
+ROOT_DIR =  os.path.abspath(os.path.dirname(__file__)) + '/'
 static_dir = ROOT_DIR + 'static'
 originals_dir_name = 'originals'
 thumbnails_dir_name = 'thumbnails'
