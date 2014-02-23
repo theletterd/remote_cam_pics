@@ -42,12 +42,18 @@ def make_thumbnail(path_to_file, shrink_factor=10):
     img.save(path)
     return path
 
-def get_thumbnail_original_pairs(limit=30, since_timestamp=None):
-    thumbnail_filenames = _get_recently_created_filenames(
-        settings.thumbnails_dir,
-        limit=limit,
-        since_timestamp=since_timestamp
-    )
+def get_thumbnail_original_pairs(limit=30, originals=None, since_timestamp=None):
+    if originals:
+        thumbnail_filenames = [
+            original.replace(settings.originals_dir_name, settings.thumbnails_dir_name, 1)
+            for original in originals
+        ]
+    else:
+        thumbnail_filenames = _get_recently_created_filenames(
+            settings.thumbnails_dir,
+            limit=limit,
+            since_timestamp=since_timestamp
+        )
 
     # trim off the 'static' dir
     thumbnail_filenames = [

@@ -19,7 +19,7 @@ $(document).ready(function() {
 	    }
 	    if ('new_thumbnail_html' in message) {
 		$('#photos').prepend(message.new_thumbnail_html);
-		$('.photo-container').fadeIn(1000);
+		$('.photo-container').fadeIn();
 	    }
 	};
 

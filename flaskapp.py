@@ -72,24 +72,23 @@ def ws_take_pics(ws):
         ws.send(json.dumps({"text": message}))
         util.photo.make_thumbnail(filename)
 
-    ws.send(json.dumps({"text": "Getting newly-created thumbnails"}))
-    thumbnail_original_pairs = util.photo.get_thumbnail_original_pairs(
-        limit=None,
-        since_timestamp=start_time
-    )
+        thumbnail_original_pairs = util.photo.get_thumbnail_original_pairs(
+            originals=[filename]
+        )
 
-    # get the HTML for the recently-taken photos
-    ctx = app.test_request_context()
-    ctx.push()
-    new_thumbnail_html = render_template(
-        'photo_container.html',
-        thumbnail_original_pairs=thumbnail_original_pairs,
-        invisible=True
-    )
-    ctx.pop()
+        # get the HTML for the recently-taken photo
+        ctx = app.test_request_context()
+        ctx.push()
+        new_thumbnail_html = render_template(
+            'photo_container.html',
+            thumbnail_original_pairs=thumbnail_original_pairs,
+            invisible=True
+        )
+        ctx.pop()
+        ws.send(json.dumps({"new_thumbnail_html": new_thumbnail_html}))
+
 
     final_data = {
-        "new_thumbnail_html": new_thumbnail_html,
         "text": "TOOK %d PICTURES" % len(thumbnail_original_pairs)
     }
     ws.send(json.dumps(final_data))
