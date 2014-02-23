@@ -5,15 +5,15 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-
 from flask_sockets import Sockets
 
 import util.sass
 import util.usb_resetter
 import util.photo
-
 import settings
+
 import os
+import time
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -49,17 +49,49 @@ def ws_take_pics(ws):
 
     assert num_pics in settings.framenum_values
 
+    start_time = int(time.time())
+    print start_time
     try:
-        ws.send(json.dumps({"message":"Resetting usb"}))
+        ws.send(json.dumps({"text": "Resetting usb"}))
         util.usb_resetter.reset_usb(settings.manufacturer)
 
-        ws.send(json.dumps({"message":"Taking %d pics" % num_pics}))
+        ws.send(json.dumps({"text": "Taking %d pics" % num_pics}))
         util.photo.take_photos(num_pics)
-
-        ws.send(json.dumps({"message":"Making thumbnails"}))
-        util.photo.make_thumbnails(num_pics)
     except:
-        ws.send(json.dumps({"message":":("}))
+        pass
+
+    filenames = util.photo.get_filenames_of_recent_photos(num_pics, start_time)
+    ws.send(json.dumps({"text": "Making %d thumbnails..." % len(filenames)}))
+
+    # make thumbnails
+    for current, filename in enumerate(filenames, 1):
+        message = "Making thumbnail {current} of {total}".format(
+            current=current,
+            total=len(filenames)
+        )
+        ws.send(json.dumps({"text": message}))
+        util.photo.make_thumbnail(filename)
+
+    ws.send(json.dumps({"text": "Getting newly-created thumbnails"}))
+    thumbnail_original_pairs = util.photo.get_thumbnail_original_pairs(
+        limit=None,
+        since_timestamp=start_time
+    )
+
+    # get the HTML for the recently-taken photos
+    ctx = app.test_request_context()
+    ctx.push()
+    new_thumbnail_html = render_template(
+        'photo_container.html',
+        thumbnail_original_pairs=thumbnail_original_pairs
+    )
+    ctx.pop()
+
+    final_data = {
+        "new_thumbnail_html": new_thumbnail_html,
+        "text": "TOOK %d PICTURES" % len(thumbnail_original_pairs)
+    }
+    ws.send(json.dumps(final_data))
     ws.close()
 
 if __name__ == '__main__':

@@ -26,7 +26,12 @@ $(document).ready(function() {
 
 	ws.onmessage = function(msgevent) {
 	    var message = $.parseJSON(msgevent.data);
-	    $('#message-area').text(message.message);
+	    if ('text' in message) {
+		$('#message-area').text(message.text);
+	    }
+	    if ('new_thumbnail_html' in message) {
+		$('#photos').prepend(message.new_thumbnail_html);
+	    }
 	};
 
 	ws.onclose = function(msgevent) {

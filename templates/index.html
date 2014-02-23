@@ -27,10 +27,7 @@
     </div>
 
     <div id="photos">
-      {% import "photo_container.html" as photo_container %}
-      {% for thumbnail, original in thumbnail_original_pairs %}
-        {{ photo_container.photo_container(thumbnail=thumbnail, original=original) }}
-      {% endfor %}
+      {% include "photo_container.html" %}
     </div>
 
   </body>

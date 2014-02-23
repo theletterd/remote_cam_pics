@@ -22,12 +22,32 @@ def take_photos(num_photos):
     if exit_code != 0:
         raise Exception
 
-def make_thumbnails(num_pics):
-    filenames = _get_recently_created_filenames(settings.originals_dir, limit=num_pics)
-    _make_thumbnails(filenames)
+def get_filenames_of_recent_photos(num_pics, since_timestamp):
+    filenames = _get_recently_created_filenames(
+        settings.originals_dir,
+        limit=num_pics,
+        since_timestamp=since_timestamp
+     )
+    return filenames
 
-def get_thumbnail_original_pairs(limit=30):
-    thumbnail_filenames = _get_recently_created_filenames(settings.thumbnails_dir, limit=limit)
+def make_thumbnail(path_to_file, shrink_factor=10):
+    img = Image.open(path_to_file)
+    new_size = [dimension / shrink_factor for dimension in img.size]
+    img.thumbnail(new_size)
+    filename = path_to_file.split('/')[-1]
+    path = "{output_dir}/{filename}".format(
+        output_dir=settings.thumbnails_dir,
+        filename=filename
+    )
+    img.save(path)
+    return path
+
+def get_thumbnail_original_pairs(limit=30, since_timestamp=None):
+    thumbnail_filenames = _get_recently_created_filenames(
+        settings.thumbnails_dir,
+        limit=limit,
+        since_timestamp=since_timestamp
+    )
 
     # trim off the 'static' dir
     thumbnail_filenames = [
@@ -42,7 +62,7 @@ def get_thumbnail_original_pairs(limit=30):
     return thumbnail_original_pairs
 
 
-def _get_recently_created_filenames(dirpath, limit=None, extension='JPG'):
+def _get_recently_created_filenames(dirpath, limit=None, since_timestamp=None, extension='JPG'):
     # get all entries in the directory w/ stats
     entries = (
         os.path.join(dirpath, fn) for fn in os.listdir(dirpath)
@@ -57,6 +77,9 @@ def _get_recently_created_filenames(dirpath, limit=None, extension='JPG'):
     )
     sorted_entries = sorted(entries, reverse=True)
 
+    if since_timestamp:
+        sorted_entries = filter(lambda x: x[0] > since_timestamp, sorted_entries)
+
     if limit:
         sorted_entries = sorted_entries[:limit]
 
@@ -65,21 +88,4 @@ def _get_recently_created_filenames(dirpath, limit=None, extension='JPG'):
     ]
 
     return pathnames
-
-def _make_thumbnail(path_to_file, shrink_factor=10):
-    img = Image.open(path_to_file)
-    new_size = [dimension / shrink_factor for dimension in img.size]
-    img.thumbnail(new_size)
-    filename = path_to_file.split('/')[-1]
-    path = "{output_dir}/{filename}".format(
-        output_dir=settings.thumbnails_dir,
-        filename=filename
-    )
-    img.save(path)
-    print "Thumbnail saved as %s" % path
-
-
-def _make_thumbnails(filenames):
-    for path in filenames:
-        _make_thumbnail(path)
 
