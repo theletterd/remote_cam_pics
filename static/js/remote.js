@@ -1,32 +1,29 @@
 $(document).ready(function() {
 
-    $('.action-button').click(function(event) {
-	// maybe it makes sense to disable all the buttons here.
-	$('.action-button').addClass('disabled');
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    socket.on('update_text', function(data) {
+	$('#message-area').text(data.text);
+    });
 
+    socket.on('new_thumbnail', function(data) {
+	$('#photos').prepend(data.new_thumbnail_html);
+	$('.photo-container').fadeIn();
+    });
+
+    socket.on('failed', function(data) {
+	$('.action-button').removeClass('disabled');
+	$('#message-area').text(data.error);
+    });
+
+    socket.on('re-enable', function() {
+	$('.action-button').removeClass('disabled');
+    });
+
+    $('.action-button').click(function(event) {
+	$('.action-button').addClass('disabled');
 	var num_pics = $(this).attr('value');
 
-	var ws = new WebSocket("ws://" + document.location.host + "/ws_take_pics");
-
-	ws.onopen = function() {
-	    ws.send(JSON.stringify({num_pics: num_pics}));
-	};
-
-	ws.onmessage = function(msgevent) {
-	    var message = $.parseJSON(msgevent.data);
-	    if ('text' in message) {
-		$('#message-area').text(message.text);
-	    }
-	    if ('new_thumbnail_html' in message) {
-		$('#photos').prepend(message.new_thumbnail_html);
-		$('.photo-container').fadeIn();
-	    }
-	};
-
-	ws.onclose = function(msgevent) {
-	    $('.action-button').removeClass('disabled');
-	};
-
-	// an then re-enable here, or on on-close.
+	socket.emit('take_pics', {num_pics: num_pics});
     });
+
 });

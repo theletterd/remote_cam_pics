@@ -1,11 +1,10 @@
 from flask import Flask
 from flask import jsonify
-from flask import json
-from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-from flask_sockets import Sockets
+import flask_socketio as socketio
+from flask_socketio import SocketIO
 
 import util.sass
 import util.usb_resetter
@@ -13,13 +12,19 @@ import util.photo
 import settings
 
 import os
+import logging
 import time
 
+
 app = Flask(__name__)
-sockets = Sockets(app)
+socketio_app = SocketIO(app)
+log = logging.getLogger(__file__)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(msg)s")
+
 
 @app.route('/', methods=['GET'])
 def index():
+    # make this a deploy script or something
     if app.debug:
         util.sass.regenerate_scss()
 
@@ -29,6 +34,7 @@ def index():
         thumbnail_original_pairs=thumbnail_original_pairs,
         framenum_values=settings.framenum_values,
     )
+
 
 @app.route('/take_pics', methods=['POST'])
 def take_pics():
@@ -42,26 +48,33 @@ def take_pics():
 
     return jsonify(success=True)
 
-@sockets.route('/ws_take_pics')
-def ws_take_pics(ws):
-    message = json.loads(ws.receive())
+
+@socketio_app.on('take_pics')
+def ws_take_pics(message):
+    log.debug(message)
     num_pics = int(message['num_pics'])
 
     assert num_pics in settings.framenum_values
 
     start_time = int(time.time())
-    print start_time
+    log.debug(start_time)
     try:
-        ws.send(json.dumps({"text": "Resetting usb"}))
+        socketio.emit('update_text', {"text": "Resetting usb"})
         util.usb_resetter.reset_usb(settings.manufacturer)
 
-        ws.send(json.dumps({"text": "Taking %d pics" % num_pics}))
+        socketio.emit('update_text', {"text": "Taking %d pics" % num_pics})
         util.photo.take_photos(num_pics)
     except:
-        pass
+        socketio.emit('failed', {"error": "FAILED :( - try again!"})
+        socketio.emit('re-enable')
+        return
 
     filenames = util.photo.get_filenames_of_recent_photos(num_pics, start_time)
-    ws.send(json.dumps({"text": "Making %d thumbnails..." % len(filenames)}))
+    log.debug(filenames)
+
+    socketio.emit('update_text', {"text": "Making %d thumbnails..." % len(filenames)})
+
+    thumbnail_original_pairs = []
 
     # make thumbnails
     for current, filename in enumerate(filenames, 1):
@@ -69,13 +82,13 @@ def ws_take_pics(ws):
             current=current,
             total=len(filenames)
         )
-        ws.send(json.dumps({"text": message}))
+        socketio.emit('update_text', {"text": message})
         util.photo.make_thumbnail(filename)
 
         thumbnail_original_pairs = util.photo.get_thumbnail_original_pairs(
             originals=[filename]
         )
-
+        log.debug(filename)
         # get the HTML for the recently-taken photo
         ctx = app.test_request_context()
         ctx.push()
@@ -85,14 +98,14 @@ def ws_take_pics(ws):
             invisible=True
         )
         ctx.pop()
-        ws.send(json.dumps({"new_thumbnail_html": new_thumbnail_html}))
-
+        socketio.emit('new_thumbnail', {"new_thumbnail_html": new_thumbnail_html})
 
     final_data = {
         "text": "TOOK %d PICTURES" % len(thumbnail_original_pairs)
     }
-    ws.send(json.dumps(final_data))
-    ws.close()
+    socketio.emit('update_text', final_data)
+    socketio.emit('re-enable')
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    socketio_app.run(app)

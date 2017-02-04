@@ -22,6 +22,7 @@ def take_photos(num_photos):
     if exit_code != 0:
         raise Exception
 
+
 def get_filenames_of_recent_photos(num_pics, since_timestamp):
     filenames = _get_recently_created_filenames(
         settings.originals_dir,
@@ -29,6 +30,7 @@ def get_filenames_of_recent_photos(num_pics, since_timestamp):
         since_timestamp=since_timestamp
      )
     return filenames
+
 
 def make_thumbnail(path_to_file, shrink_factor=10):
     img = Image.open(path_to_file)
@@ -41,6 +43,7 @@ def make_thumbnail(path_to_file, shrink_factor=10):
     )
     img.save(path)
     return path
+
 
 def get_thumbnail_original_pairs(limit=30, originals=None, since_timestamp=None):
     if originals:
@@ -84,7 +87,7 @@ def _get_recently_created_filenames(dirpath, limit=None, since_timestamp=None, e
     sorted_entries = sorted(entries, reverse=True)
 
     if since_timestamp:
-        sorted_entries = filter(lambda x: x[0] > since_timestamp, sorted_entries)
+        sorted_entries = list(filter(lambda x: x[0] > since_timestamp, sorted_entries))
 
     if limit:
         sorted_entries = sorted_entries[:limit]
@@ -94,4 +97,3 @@ def _get_recently_created_filenames(dirpath, limit=None, since_timestamp=None, e
     ]
 
     return pathnames
-
