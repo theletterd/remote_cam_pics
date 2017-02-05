@@ -64,9 +64,10 @@ def ws_take_pics(message):
 
         socketio.emit('update_text', {"text": "Taking %d pics" % num_pics})
         util.photo.take_photos(num_pics)
-    except:
+    except Exception as e:
         socketio.emit('failed', {"error": "FAILED :( - try again!"})
         socketio.emit('re-enable')
+        log.debug(e)
         return
 
     filenames = util.photo.get_filenames_of_recent_photos(num_pics, start_time)
