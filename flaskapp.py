@@ -58,7 +58,8 @@ def ws_take_pics(message):
     log.debug(start_time)
     try:
         socketio.emit('update_text', {"text": "Taking %d pics" % num_pics})
-        util.photo.take_photos(num_pics)
+        for i in range(num_pics):
+            util.photo.take_photos(1)
     except Exception as e:
         socketio.emit('failed', {"error": "FAILED :( - try again!"})
         socketio.emit('re-enable')
