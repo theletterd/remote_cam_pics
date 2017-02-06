@@ -7,7 +7,6 @@ import flask_socketio as socketio
 from flask_socketio import SocketIO
 
 import util.sass
-import util.usb_resetter
 import util.photo
 import settings
 
@@ -42,7 +41,6 @@ def take_pics():
 
     assert num_pics in settings.framenum_values
 
-    util.usb_resetter.reset_usb(settings.manufacturer)
     util.photo.take_photos(num_pics)
     util.photo.make_thumbnails(num_pics)
 
@@ -59,9 +57,6 @@ def ws_take_pics(message):
     start_time = int(time.time())
     log.debug(start_time)
     try:
-        socketio.emit('update_text', {"text": "Resetting usb"})
-        util.usb_resetter.reset_usb(settings.manufacturer)
-
         socketio.emit('update_text', {"text": "Taking %d pics" % num_pics})
         util.photo.take_photos(num_pics)
     except Exception as e:
