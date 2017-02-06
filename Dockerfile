@@ -24,4 +24,5 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 EXPOSE 8000
-CMD gunicorn -k gevent --workers=5 --log-level=debug -b 0.0.0.0:8000 flaskapp:app
+# gunicorn/flask-socketio require only 1 worker. This is frustrating.
+CMD gunicorn -k gevent --workers=1 --log-level=debug -b 0.0.0.0:8000 flaskapp:app
