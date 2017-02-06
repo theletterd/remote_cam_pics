@@ -1,26 +1,47 @@
 from stat import S_ISREG, ST_CTIME, ST_MODE
 import os
-import subprocess
 import settings
+import gphoto2 as gp
 from PIL import Image
 
 
 def take_photos(num_photos):
-
-    args = [
-        'gphoto2',
-        '--auto-detect',
-        '--interval=1',
-        '--frames={num_frames}'.format(num_frames=num_photos),
-        '--capture-image-and-download',
-        '--filename={originals_dir}/20%y-%m-%d_%H:%M:%S.%C'.format(
-            originals_dir=settings.originals_dir
+    context = gp.Context()
+    camera = gp.Camera()
+    camera.init(context)
+    for _ in range(num_photos):
+        file_path = gp.check_result(
+            gp.gp_camera_capture(
+                camera,
+                gp.GP_CAPTURE_IMAGE,
+                context
+            )
         )
-    ]
 
-    exit_code = subprocess.check_call(args)
-    if exit_code != 0:
-        raise Exception
+        target = os.path.join(settings.originals_dir, file_path.name)
+        camera_file = gp.check_result(
+            gp.gp_camera_file_get(
+                camera,
+                file_path.folder,
+                file_path.name,
+                gp.GP_FILE_TYPE_NORMAL, context
+            )
+        )
+        gp.check_result(
+            gp.gp_file_save(
+                camera_file,
+                target
+            )
+        )
+        gp.check_result(
+            gp.gp_camera_file_delete(
+                camera,
+                file_path.folder,
+                file_path.name,
+                context
+            )
+        )
+    gp.gp_camera_exit(camera, context)
 
 
 def get_filenames_of_recent_photos(num_pics, since_timestamp):
