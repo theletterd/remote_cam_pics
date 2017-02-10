@@ -18,13 +18,23 @@ Prerequisites:
 
 To build:
 ---------
-* `$ docker build -t remote_cam_pics .`
+* `$ make build_image`
 
 
 To run:
 -------
-* `$ docker run -p 8000:8000 --privileged -v /dev/bus/usb:/dev/bus/usb remote_cam_pics`
+* `$ make start_container`
+
+To stop:
+--------
+* `$ make stop_container`
+
+To remove container:
+--------------------
+* `$ make clean`
+
 
 Notes:
 ------
+Original images are stored in `static/originals`.
 See settings.py for various, uh, settings.
