@@ -1,14 +1,14 @@
-build_image:
-	echo "building..."
-	docker build -t remote_cam_pics .
-
 stop_container:
 	echo "stopping"
-	docker ps -f ancestor=remote_cam_pics -q | xargs docker stop
+	docker ps -f ancestor=remote_cam_pics -q | xargs --no-run-if-empty docker stop
 
-clean:
+clean: stop_container
 	echo "cleaning..."
 	docker rmi remote_cam_pics -f
+
+build_image: clean
+	echo "building..."
+	docker build -t remote_cam_pics .
 
 start_container:
 	echo "Starting container..."

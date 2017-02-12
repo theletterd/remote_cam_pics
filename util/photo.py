@@ -5,52 +5,46 @@ import gphoto2 as gp
 from PIL import Image
 
 
-def take_photos(num_photos):
+def take_photo():
     context = gp.Context()
     camera = gp.Camera()
     camera.init(context)
-    for _ in range(num_photos):
-        file_path = gp.check_result(
-            gp.gp_camera_capture(
-                camera,
-                gp.GP_CAPTURE_IMAGE,
-                context
-            )
-        )
 
-        target = os.path.join(settings.originals_dir, file_path.name)
-        camera_file = gp.check_result(
-            gp.gp_camera_file_get(
-                camera,
-                file_path.folder,
-                file_path.name,
-                gp.GP_FILE_TYPE_NORMAL, context
-            )
+    file_path = gp.check_result(
+        gp.gp_camera_capture(
+            camera,
+            gp.GP_CAPTURE_IMAGE,
+            context
         )
-        gp.check_result(
-            gp.gp_file_save(
-                camera_file,
-                target
-            )
+    )
+
+    # TODO - label the photos by date - YYYY-MM-DD-HH-MM-SS or something.
+    target = os.path.join(settings.originals_dir, file_path.name)
+    camera_file = gp.check_result(
+        gp.gp_camera_file_get(
+            camera,
+            file_path.folder,
+            file_path.name,
+            gp.GP_FILE_TYPE_NORMAL, context
         )
-        gp.check_result(
-            gp.gp_camera_file_delete(
-                camera,
-                file_path.folder,
-                file_path.name,
-                context
-            )
+    )
+    gp.check_result(
+        gp.gp_file_save(
+            camera_file,
+            target
         )
+    )
+    gp.check_result(
+        gp.gp_camera_file_delete(
+            camera,
+            file_path.folder,
+            file_path.name,
+            context
+        )
+    )
     gp.gp_camera_exit(camera, context)
 
-
-def get_filenames_of_recent_photos(num_pics, since_timestamp):
-    filenames = _get_recently_created_filenames(
-        settings.originals_dir,
-        limit=num_pics,
-        since_timestamp=since_timestamp
-     )
-    return filenames
+    return target
 
 
 def make_thumbnail(path_to_file, shrink_factor=10):
@@ -66,7 +60,7 @@ def make_thumbnail(path_to_file, shrink_factor=10):
     return path
 
 
-def get_thumbnail_original_pairs(limit=30, originals=None, since_timestamp=None):
+def get_thumbnail_original_pairs(limit=30, originals=None):
     if originals:
         thumbnail_filenames = [
             original.replace(settings.originals_dir_name, settings.thumbnails_dir_name, 1)
@@ -76,7 +70,6 @@ def get_thumbnail_original_pairs(limit=30, originals=None, since_timestamp=None)
         thumbnail_filenames = _get_recently_created_filenames(
             settings.thumbnails_dir,
             limit=limit,
-            since_timestamp=since_timestamp
         )
 
     # trim off the 'static' dir
@@ -92,7 +85,7 @@ def get_thumbnail_original_pairs(limit=30, originals=None, since_timestamp=None)
     return thumbnail_original_pairs
 
 
-def _get_recently_created_filenames(dirpath, limit=None, since_timestamp=None, extension='JPG'):
+def _get_recently_created_filenames(dirpath, limit=None, extension='JPG'):
     # get all entries in the directory w/ stats
     entries = (
         os.path.join(dirpath, fn) for fn in os.listdir(dirpath)
@@ -106,9 +99,6 @@ def _get_recently_created_filenames(dirpath, limit=None, since_timestamp=None, e
         for stat, path in entries if S_ISREG(stat[ST_MODE])
     )
     sorted_entries = sorted(entries, reverse=True)
-
-    if since_timestamp:
-        sorted_entries = list(filter(lambda x: x[0] > since_timestamp, sorted_entries))
 
     if limit:
         sorted_entries = sorted_entries[:limit]
