@@ -35,70 +35,45 @@ def index():
     )
 
 
-@app.route('/take_pics', methods=['POST'])
-def take_pics():
-    num_pics = int(request.form['framenum'])
-
-    assert num_pics in settings.framenum_values
-
-    util.photo.take_photos(num_pics)
-    util.photo.make_thumbnails(num_pics)
-
-    return jsonify(success=True)
-
-
 @socketio_app.on('take_pics')
 def ws_take_pics(message):
-    log.debug(message)
     num_pics = int(message['num_pics'])
 
     assert num_pics in settings.framenum_values
+    successful_pics = 0
 
-    start_time = int(time.time())
-    log.debug(start_time)
-    try:
-        socketio.emit('update_text', {"text": "Taking %d pics" % num_pics})
-        for i in range(num_pics):
-            util.photo.take_photos(1)
-    except Exception as e:
-        socketio.emit('failed', {"error": "FAILED :( - try again!"})
-        socketio.emit('re-enable')
-        log.debug(e)
-        return
-
-    filenames = util.photo.get_filenames_of_recent_photos(num_pics, start_time)
-    log.debug(filenames)
-
-    socketio.emit('update_text', {"text": "Making %d thumbnails..." % len(filenames)})
-
-    thumbnail_original_pairs = []
-
-    # make thumbnails
-    for current, filename in enumerate(filenames, 1):
-        message = "Making thumbnail {current} of {total}".format(
-            current=current,
-            total=len(filenames)
-        )
+    for index in range(1, num_pics + 1):
+        message = "Taking {index} of {total} pics".format(index=index, total=num_pics)
         socketio.emit('update_text', {"text": message})
-        util.photo.make_thumbnail(filename)
+        try:
+            filename = util.photo.take_photo()
+            successful_pics += 1
+        except Exception as e:
+            message = "FAILED on {index} of {total}".format(index=index, total=num_pics)
+            socketio.emit('failed', {"error": message})
+            continue
 
-        thumbnail_original_pairs = util.photo.get_thumbnail_original_pairs(
-            originals=[filename]
-        )
-        log.debug(filename)
-        # get the HTML for the recently-taken photo
-        ctx = app.test_request_context()
-        ctx.push()
-        new_thumbnail_html = render_template(
-            'photo_container.html',
-            thumbnail_original_pairs=thumbnail_original_pairs,
-            invisible=True
-        )
-        ctx.pop()
-        socketio.emit('new_thumbnail', {"new_thumbnail_html": new_thumbnail_html})
+        try:
+            util.photo.make_thumbnail(filename)
+            thumbnail_original_pairs = util.photo.get_thumbnail_original_pairs(
+                originals=[filename]
+            )
+            log.debug(filename)
+            # get the HTML for the recently-taken photo
+            ctx = app.test_request_context()
+            ctx.push()
+            new_thumbnail_html = render_template(
+                'photo_container.html',
+                thumbnail_original_pairs=thumbnail_original_pairs,
+                invisible=True
+            )
+            ctx.pop()
+            socketio.emit('new_thumbnail', {"new_thumbnail_html": new_thumbnail_html})
+        except Exception as e:
+            socketio.emit('failed', {"error": "Error making thumbnail"})
 
     final_data = {
-        "text": "TOOK %d PICTURES" % len(thumbnail_original_pairs)
+        "text": "TOOK {successes} PICTURES".format(successes=successful_pics)
     }
     socketio.emit('update_text', final_data)
     socketio.emit('re-enable')
