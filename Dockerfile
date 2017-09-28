@@ -15,6 +15,9 @@ RUN apt-get install -y \
   -o APT::Install-Recommends=false \
   -o APT::Install-Suggests=false
 
+# Pillow is broken. after 3.0.0, requires zlib and jpeg libs
+# see http://pillow.readthedocs.io/en/3.1.x/installation.html
+
 RUN ln -s /usr/bin/python3.5 /usr/bin/python
 RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
@@ -24,5 +27,4 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 EXPOSE 8000
-# gunicorn/flask-socketio require only 1 worker. This is frustrating.
-CMD gunicorn -k gevent --workers=1 --log-level=debug -b 0.0.0.0:8000 flaskapp:app
+CMD gunicorn -k flask_sockets.worker --workers=5 --log-level=debug -b 0.0.0.0:8000 flaskapp:app
