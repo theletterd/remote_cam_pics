@@ -16,6 +16,7 @@ Prerequisites:
   * docker
 
 
+
 To build:
 ---------
 * `$ make build_image`
@@ -33,6 +34,16 @@ To remove container:
 --------------------
 * `$ make clean`
 
+
+For Development/testing
+=======================
+
+To create virtualenv:
+---------------------
+* `virtualenv -p python3.5 env`
+* `source env/bin/activate`
+* `pip install -r requirements.txt`
+* `make test_run`
 
 Notes:
 ------

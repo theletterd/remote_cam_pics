@@ -1,3 +1,8 @@
+test_run:
+	echo "test run"
+	echo "(assumes you are in the appropriate virtualenv)"
+	gunicorn -k flask_sockets.worker --workers=1 --log-level=debug -b 0.0.0.0:8000 flaskapp:app
+
 build_image:
 	echo "building..."
 	docker build -t remote_cam_pics .
