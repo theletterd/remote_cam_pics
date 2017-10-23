@@ -3,6 +3,7 @@ import os
 import settings
 import gphoto2 as gp
 from PIL import Image
+import datetime
 
 
 def take_photo():
@@ -19,7 +20,8 @@ def take_photo():
     )
 
     # TODO - label the photos by date - YYYY-MM-DD-HH-MM-SS or something.
-    target = os.path.join(settings.originals_dir, file_path.name)
+    datestr = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S:%f ')
+    target = os.path.join(settings.originals_dir, datestr + file_path.name)
     camera_file = gp.check_result(
         gp.gp_camera_file_get(
             camera,
